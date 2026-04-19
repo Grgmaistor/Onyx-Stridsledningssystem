@@ -46,7 +46,7 @@ function App() {
       />
       
       {/* UI Overlays */}
-      <ObjectivesPanel />
+      <ObjectivesPanel workerRef={workerRef} />
       
       <SensorData />
       
@@ -56,7 +56,7 @@ function App() {
 
       <StatusBar mousePos={mousePos} />
 
-      <TacticalPopup pos={popupPos!} />
+      <TacticalPopup pos={popupPos!} workerRef={workerRef} />
     </div>
   );
 }

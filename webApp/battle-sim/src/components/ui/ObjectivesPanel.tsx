@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import type { MutableRefObject } from 'react';
 import { CommsPanel } from './CommsPanel';
 
-export function ObjectivesPanel() {
+export function ObjectivesPanel({ workerRef }: { workerRef: MutableRefObject<Worker | null> }) {
   const [activeTab, setActiveTab] = useState<'objectives' | 'comms'>('objectives');
 
   return (
@@ -48,7 +49,7 @@ export function ObjectivesPanel() {
             </div>
           </div>
         ) : (
-          <CommsPanel />
+          <CommsPanel workerRef={workerRef} />
         )}
       </div>
     </div>

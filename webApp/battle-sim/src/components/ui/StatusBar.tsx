@@ -1,4 +1,9 @@
+import { useSimulationStore } from '../../store/useSimulationStore';
+
 export function StatusBar({ mousePos }: { mousePos: { lng: number, lat: number } | null }) {
+  const drawingMode   = useSimulationStore(state => state.drawingMode);
+  const drawPathCount = useSimulationStore(state => state.currentDrawPath.length);
+
   return (
     <div className="absolute bottom-20 left-80 ml-4 flex items-center space-x-3 pointer-events-none z-10">
       <div className="px-3 py-1.5 bg-gray-900/80 backdrop-blur border border-gray-700 rounded-md text-xs font-mono text-gray-300 shadow">
@@ -12,6 +17,12 @@ export function StatusBar({ mousePos }: { mousePos: { lng: number, lat: number }
           <span className="text-gray-500">Cursor position unknown</span>
         )}
       </div>
+
+      {drawingMode === 'patrol' && (
+        <div className="px-3 py-1.5 bg-yellow-900/80 border border-yellow-600 rounded-md text-xs text-yellow-300 shadow animate-pulse">
+          ✏ PATROL DRAW · {drawPathCount} pts · Right-click to confirm
+        </div>
+      )}
     </div>
   );
 }

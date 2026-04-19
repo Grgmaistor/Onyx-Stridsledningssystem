@@ -1,10 +1,10 @@
 import { create } from 'zustand';
-import type { Entity, Aircraft, Base } from '../models/types';
+import type { Entity, Aircraft, Base, Position } from '../models/types';
 import { AircraftLibrary } from './library';
 
 export interface ChatMessage {
   id: string;
-  sender: 'user' | 'pilot';
+  sender: 'user' | 'pilot' | 'system';
   text: string;
   timestamp: string;
 }
@@ -20,6 +20,14 @@ export interface SimulationState {
   setPlacementMode: (mode: 'troop' | 'base' | 'city' | 'aircraft' | null) => void;
   chatHistory: Record<string, ChatMessage[]>;
   addChatMessage: (aircraftId: string, message: ChatMessage) => void;
+  // Drawing mode for patrol path
+  drawingMode: 'patrol' | null;
+  drawingAircraftId: string | null;
+  currentDrawPath: Position[];
+  startDrawing: (aircraftId: string) => void;
+  appendDrawPoint: (pos: Position) => void;
+  finalizeDrawPath: () => Position[];
+  cancelDrawing: () => void;
 }
 
 const mockEntities: Record<string, Entity | Aircraft | Base> = {
@@ -35,26 +43,38 @@ const mockEntities: Record<string, Entity | Aircraft | Base> = {
   } as Base,
   'city-1': { id: 'city-1', type: 'city', affiliation: 'neutral', position: { lng: 18.0215, lat: 59.3326 }, name: 'Stockholm West', health: 500, maxHealth: 500 },
   'aircraft-1': { 
-    id: 'aircraft-1', type: 'aircraft', status: 'in-flight', affiliation: 'friendly', 
+    id: 'aircraft-1', type: 'aircraft', status: 'idle', affiliation: 'friendly', 
     position: { lng: 18.0800, lat: 59.3500 }, name: 'ABC123', health: 200, maxHealth: 200,
-    specs: AircraftLibrary['Jas 39E Gripen'], heading: 45, altitude: 38000, velocity: 650, sog: 650, 
+    specs: AircraftLibrary['Jas 39E Gripen'], heading: 45, altitude: 15000, velocity: 0, sog: 0, 
     fuel: AircraftLibrary['Jas 39E Gripen'].maxFuel * 0.98, weapons: [], personnel: 1, 
-    radioChannel: 'F16_AR_EA', flightTime: '00:23:46'
+    radioChannel: 'F16_AR_EA', flightTime: '00:00:00',
+    mission: 'idle',
   } as Aircraft,
   'aircraft-2': { 
     id: 'aircraft-2', type: 'aircraft', status: 'in-flight', affiliation: 'enemy', 
     position: { lng: 18.2400, lat: 59.4000 }, name: 'Bogey 1', health: 200, maxHealth: 200,
     specs: AircraftLibrary['MiG-29 Fulcrum'], heading: 225, altitude: 35000, velocity: 700, sog: 700, 
     fuel: AircraftLibrary['MiG-29 Fulcrum'].maxFuel * 0.85, weapons: [], personnel: 1, 
-    flightTime: '00:15:20'
+    flightTime: '00:15:20',
+    mission: 'patrol',
+    patrolPath: [
+      { lng: 18.2400, lat: 59.4000 },
+      { lng: 18.3000, lat: 59.4500 },
+      { lng: 18.3500, lat: 59.3800 },
+    ],
+    patrolIndex: 0,
   } as Aircraft,
 };
 
-export const useSimulationStore = create<SimulationState>((set) => ({
+export const useSimulationStore = create<SimulationState>((set, get) => ({
   entities: mockEntities,
   selectedEntityId: null,
   placementMode: null,
   chatHistory: {},
+  drawingMode: null,
+  drawingAircraftId: null,
+  currentDrawPath: [],
+
   setPlacementMode: (mode) => set({ placementMode: mode }),
   selectEntity: (id) => set({ selectedEntityId: id }),
   updateEntityPosition: (id, lng, lat) => 
@@ -72,4 +92,26 @@ export const useSimulationStore = create<SimulationState>((set) => ({
       [aircraftId]: [...(state.chatHistory[aircraftId] || []), message]
     }
   })),
+
+  startDrawing: (aircraftId) => set({
+    drawingMode: 'patrol',
+    drawingAircraftId: aircraftId,
+    currentDrawPath: [],
+  }),
+
+  appendDrawPoint: (pos) => set((state) => ({
+    currentDrawPath: [...state.currentDrawPath, pos],
+  })),
+
+  finalizeDrawPath: () => {
+    const path = get().currentDrawPath;
+    set({ drawingMode: null, drawingAircraftId: null, currentDrawPath: [] });
+    return path;
+  },
+
+  cancelDrawing: () => set({
+    drawingMode: null,
+    drawingAircraftId: null,
+    currentDrawPath: [],
+  }),
 }));

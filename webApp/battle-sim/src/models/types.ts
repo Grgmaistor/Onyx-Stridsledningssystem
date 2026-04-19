@@ -2,6 +2,7 @@ export type EntityType = 'troop' | 'base' | 'city' | 'aircraft';
 export type Affiliation = 'friendly' | 'enemy' | 'neutral';
 export type BaseType = 'large_airbase' | 'small_airfield';
 export type AircraftStatus = 'idle' | 'ready' | 'in-flight' | 'mayday' | 'eject' | 'destroyed';
+export type MissionType = 'idle' | 'patrol' | 'support' | 'attack' | 'resupply' | 'retreat' | 'battle';
 
 export interface Position {
   lng: number;
@@ -54,5 +55,11 @@ export interface Aircraft extends Entity {
   personnel: number;
   radioChannel?: string;
   flightTime?: string;
-  waypoint?: Position;
+  waypoint?: Position;     // internal — used by resupply/mayday RTB
+  userWaypoint?: Position;  // user-assigned via right-click — always highest priority
+  // Mission system
+  mission: MissionType;
+  patrolPath?: Position[];   // ordered list of waypoints for patrol loop
+  patrolIndex?: number;      // which patrol waypoint we're heading to
+  targetId?: string;         // id of entity being attacked / supported
 }
