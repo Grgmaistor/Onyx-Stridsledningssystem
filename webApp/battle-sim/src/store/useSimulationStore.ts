@@ -16,8 +16,13 @@ export interface SimulationState {
   updateEntityPosition: (id: string, lng: number, lat: number) => void;
   setAllEntities: (newEntities: Record<string, Entity | Aircraft | Base>) => void;
   addEntity: (entity: Entity | Aircraft | Base) => void;
+  deleteEntity: (id: string) => void;
   placementMode: 'troop' | 'base' | 'city' | 'aircraft' | null;
   setPlacementMode: (mode: 'troop' | 'base' | 'city' | 'aircraft' | null) => void;
+  selectedAircraftType: string;
+  setSelectedAircraftType: (type: string) => void;
+  selectedBaseType: 'large_airbase' | 'small_airfield';
+  setSelectedBaseType: (type: 'large_airbase' | 'small_airfield') => void;
   chatHistory: Record<string, ChatMessage[]>;
   addChatMessage: (aircraftId: string, message: ChatMessage) => void;
   // Drawing mode for patrol path
@@ -70,6 +75,8 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
   entities: mockEntities,
   selectedEntityId: null,
   placementMode: null,
+  selectedAircraftType: 'Jas 39E Gripen',
+  selectedBaseType: 'small_airfield',
   chatHistory: {},
   drawingMode: null,
   drawingAircraftId: null,
@@ -86,6 +93,12 @@ export const useSimulationStore = create<SimulationState>((set, get) => ({
     })),
   setAllEntities: (newEntities) => set({ entities: newEntities }),
   addEntity: (entity) => set((state) => ({ entities: { ...state.entities, [entity.id]: entity } })),
+  deleteEntity: (id) => set((state) => {
+    const { [id]: _, ...remaining } = state.entities;
+    return { entities: remaining, selectedEntityId: state.selectedEntityId === id ? null : state.selectedEntityId };
+  }),
+  setSelectedAircraftType: (type) => set({ selectedAircraftType: type }),
+  setSelectedBaseType: (type) => set({ selectedBaseType: type }),
   addChatMessage: (aircraftId, message) => set((state) => ({
     chatHistory: {
       ...state.chatHistory,

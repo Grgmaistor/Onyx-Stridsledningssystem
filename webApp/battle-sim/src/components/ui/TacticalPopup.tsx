@@ -21,6 +21,7 @@ export function TacticalPopup({ pos, workerRef }: TacticalPopupProps) {
   const entities        = useSimulationStore(state => state.entities);
   const selectedEntityId = useSimulationStore(state => state.selectedEntityId);
   const selectEntity    = useSimulationStore(state => state.selectEntity);
+  const deleteEntity    = useSimulationStore(state => state.deleteEntity);
   const selectedEntity  = selectedEntityId ? entities[selectedEntityId] : null;
 
   if (!selectedEntity || !pos) return null;
@@ -34,6 +35,12 @@ export function TacticalPopup({ pos, workerRef }: TacticalPopupProps) {
   const sendMission = (mission: string) => {
     if (!ac) return;
     workerRef.current?.postMessage({ type: 'UPDATE_MISSION', payload: { id: ac.id, mission } });
+  };
+
+  const handleDelete = () => {
+    if (!selectedEntityId) return;
+    deleteEntity(selectedEntityId);
+    selectEntity(null);
   };
 
   const affiliationClass = selectedEntity.affiliation === 'friendly'
@@ -185,6 +192,16 @@ export function TacticalPopup({ pos, workerRef }: TacticalPopupProps) {
               </div>
             </div>
           )}
+
+          {/* Delete button (always available) */}
+          <div className="pt-2 border-t border-gray-700">
+            <button
+              onClick={handleDelete}
+              className="w-full py-1.5 px-2 text-xs font-bold bg-red-900/60 border border-red-700 text-red-300 rounded hover:bg-red-900/80 transition-colors"
+            >
+              🗑 DELETE
+            </button>
+          </div>
         </div>
       </div>
     </div>

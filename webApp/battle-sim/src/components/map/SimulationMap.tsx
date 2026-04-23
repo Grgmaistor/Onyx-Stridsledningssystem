@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, useMemo, MutableRefObject } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
+import type { MutableRefObject } from 'react';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useSimulationStore } from '../../store/useSimulationStore';
@@ -21,9 +22,6 @@ export function SimulationMap({ setPopupPos, setMousePos, workerRef }: Simulatio
   const selectEntity    = useSimulationStore(state => state.selectEntity);
   const drawingMode     = useSimulationStore(state => state.drawingMode);
   const currentDrawPath = useSimulationStore(state => state.currentDrawPath);
-  const appendDrawPoint = useSimulationStore(state => state.appendDrawPoint);
-  const finalizeDrawPath = useSimulationStore(state => state.finalizeDrawPath);
-  const drawingAircraftId = useSimulationStore(state => state.drawingAircraftId);
 
   const selectedEntity = selectedEntityId ? entities[selectedEntityId] : null;
 
@@ -268,9 +266,17 @@ export function SimulationMap({ setPopupPos, setMousePos, workerRef }: Simulatio
             name: `New ${state.placementMode}`, health: 100, maxHealth: 100
           };
           if (state.placementMode === 'base') {
-            Object.assign(newEntity, { baseType: 'small_airfield', fuelReserves: 50000, weaponReserves: 100, maxAircraft: 4, parkedAircraftIds: [] });
+            Object.assign(newEntity, { 
+              baseType: state.selectedBaseType,
+              health: state.selectedBaseType === 'large_airbase' ? 1000 : 500,
+              maxHealth: state.selectedBaseType === 'large_airbase' ? 1000 : 500,
+              fuelReserves: state.selectedBaseType === 'large_airbase' ? 500000 : 50000,
+              weaponReserves: state.selectedBaseType === 'large_airbase' ? 1000 : 100,
+              maxAircraft: state.selectedBaseType === 'large_airbase' ? 10 : 4,
+              parkedAircraftIds: []
+            });
           } else if (state.placementMode === 'aircraft') {
-            const specs = AircraftLibrary['Jas 39E Gripen'];
+            const specs = AircraftLibrary[state.selectedAircraftType];
             Object.assign(newEntity, {
               specs, status: 'idle', heading: 0, altitude: 0, velocity: 0, sog: 0,
               fuel: specs.maxFuel, weapons: [], personnel: 1,
