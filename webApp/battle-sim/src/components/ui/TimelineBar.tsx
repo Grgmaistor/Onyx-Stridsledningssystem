@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTimelineStore } from '../../store/useTimelineStore';
 
 export function TimelineBar() {
   const [showEvents, setShowEvents] = useState(false);
   const [hoveredEventId, setHoveredEventId] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
   
   const mode = useTimelineStore(state => state.mode);
   const currentTick = useTimelineStore(state => state.currentTick);
@@ -16,9 +17,24 @@ export function TimelineBar() {
 
   const hasRecordedEvents = (recordedSession?.events.length ?? 0) > 0;
   const hasPredictions = scenarios.length > 0;
+  const isNotAtPresent = currentTick < 100;
 
   // Get max tick from recorded session
   const maxTick = recordedSession?.endTick ?? 1000;
+
+  // Auto-advance timeline when playing
+  useEffect(() => {
+    if (!isPlaying || currentTick >= 100) {
+      setIsPlaying(false);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setCurrentTick(Math.min(currentTick + 1, 100));
+    }, 50); // Advance by 1% every 50ms
+
+    return () => clearInterval(interval);
+  }, [isPlaying, currentTick, setCurrentTick]);
 
   // Calculate event marker positions
   const getEventPosition = (tick: number) => {
@@ -41,6 +57,28 @@ export function TimelineBar() {
       default:
         return '•';
     }
+  };
+
+  const handleFastBack = () => {
+    setCurrentTick(Math.max(currentTick - 10, 0));
+  };
+
+  const handleFastForward = () => {
+    setCurrentTick(Math.min(currentTick + 10, 100));
+  };
+
+  const handlePlayPause = () => {
+    if (currentTick >= 100) {
+      setCurrentTick(0);
+      setIsPlaying(true);
+    } else {
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const handleJumpToPresent = () => {
+    setCurrentTick(100);
+    setIsPlaying(false);
   };
 
   return (
@@ -151,6 +189,47 @@ export function TimelineBar() {
                 </button>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Playback controls - visible when not at present */}
+        {isNotAtPresent && (
+          <div className="absolute -bottom-10 right-0 flex gap-2">
+            <button
+              onClick={handleFastBack}
+              className="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs rounded transition-colors font-bold"
+              title="Rewind 10%"
+            >
+              ⏮ Back
+            </button>
+
+            <button
+              onClick={handlePlayPause}
+              className={`px-3 py-1 text-xs rounded transition-colors font-bold ${
+                isPlaying
+                  ? 'bg-yellow-600 hover:bg-yellow-700 text-white'
+                  : 'bg-gray-700 hover:bg-gray-600 text-gray-200'
+              }`}
+              title={isPlaying ? 'Pause' : 'Play'}
+            >
+              {isPlaying ? '⏸ Pause' : '▶ Play'}
+            </button>
+
+            <button
+              onClick={handleFastForward}
+              className="px-3 py-1 bg-gray-700 hover:bg-gray-600 text-gray-200 text-xs rounded transition-colors font-bold"
+              title="Fast forward 10%"
+            >
+              Forward ⏭
+            </button>
+
+            <button
+              onClick={handleJumpToPresent}
+              className="px-3 py-1 bg-green-700 hover:bg-green-600 text-white text-xs rounded transition-colors font-bold"
+              title="Jump to present"
+            >
+              🎯 Now
+            </button>
           </div>
         )}
 
